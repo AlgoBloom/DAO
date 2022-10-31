@@ -1,6 +1,6 @@
 from pyteal import *
 
-def clear_state_program():
+def clear():
     get_vote_of_sender = App.localGetEx(Int(0), App.id(), Bytes("voted"))
     program = Seq(
         [
