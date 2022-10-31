@@ -3,7 +3,7 @@
 from pyteal import *
 
 
-def approval():
+def approval_program():
     on_creation = Seq(
         [
             App.globalPut(Bytes("Creator"), Txn.sender()),
@@ -72,3 +72,35 @@ def approval():
     )
 
     return program
+
+
+def clear_state_program():
+    get_vote_of_sender = App.localGetEx(Int(0), App.id(), Bytes("voted"))
+    program = Seq(
+        [
+            get_vote_of_sender,
+            If(
+                And(
+                    Global.round() <= App.globalGet(Bytes("VoteEnd")),
+                    get_vote_of_sender.hasValue(),
+                ),
+                App.globalPut(
+                    get_vote_of_sender.value(),
+                    App.globalGet(get_vote_of_sender.value()) - Int(1),
+                ),
+            ),
+            Return(Int(1)),
+        ]
+    )
+
+    return program
+
+
+if __name__ == "__main__":
+    with open("vote_approval.teal", "w") as f:
+        compiled = compileTeal(approval_program(), mode=Mode.Application, version=2)
+        f.write(compiled)
+
+    with open("vote_clear_state.teal", "w") as f:
+        compiled = compileTeal(clear_state_program(), mode=Mode.Application, version=2)
+        f.write(compiled)
